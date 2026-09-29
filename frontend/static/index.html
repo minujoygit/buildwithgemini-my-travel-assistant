@@ -37,12 +37,19 @@
   .a2text.a2-caption { font-size:.85rem; color:#666; }
   .a2divider { border:none; border-top:1px solid var(--border); margin:.4rem 0; width:100%; }
   .a2img { max-width:100%; border-radius:8px; display:block; }
-  .material-symbols-outlined { font-family:'Material Symbols Outlined'; font-size:1.25rem; line-height:1; vertical-align:middle; color:var(--accent); }
+  .prompts { display:flex; gap:.5rem; padding:.5rem 1rem; background:var(--bg); border-top:1px solid var(--border); overflow-x:auto; }
+  .prompt-chip { background:#fff; border:1px solid var(--border); border-radius:16px; padding:.4rem .8rem; font-size:.85rem; cursor:pointer; white-space:nowrap; transition:all 0.2s ease; color:#333; }
+  .prompt-chip:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 </style>
 </head>
 <body>
 <header>My Travel Assistant</header>
 <div id="log"></div>
+<div class="prompts">
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Plan a 3-day itinerary for Kyoto')">🗺️ Plan a 3-day itinerary for Kyoto</button>
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Generate scenic photo of Kyoto bamboo forest')">🎨 Generate scenic photo of Kyoto bamboo forest</button>
+  <button type="button" class="prompt-chip" onclick="sendPrompt('Calculate a mid-range 5-day budget for Paris')">💰 Calculate a mid-range 5-day budget for Paris</button>
+</div>
 <form id="form">
   <input id="input" placeholder="Ask something…" autocomplete="off" autofocus>
   <button>Send</button>
@@ -52,6 +59,11 @@
 const log = document.getElementById("log");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
+
+function sendPrompt(text) {
+  input.value = text;
+  form.requestSubmit();
+}
 
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
