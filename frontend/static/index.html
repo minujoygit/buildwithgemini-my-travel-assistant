@@ -86,6 +86,8 @@ function boundStr(v) {
   if (v == null) return "";
   if (typeof v === "string") return v;
   if (typeof v.literalString === "string") return v.literalString;
+  if (typeof v.url === "string") return v.url;
+  if (v.url && typeof v.url.literalString === "string") return v.url.literalString;
   return "";
 }
 
@@ -177,13 +179,74 @@ function flattenText(messages) {
   return out.join("\n").trim();
 }
 
+function renderFormattedText(container, text) {
+  const lines = text.split("\n");
+  lines.forEach((line, lineIdx) => {
+    if (lineIdx > 0) container.appendChild(document.createElement("br"));
+    
+    // Match Markdown images: ![alt](url), links: [label](url), or bare image URLs
+    const regex = /!\[([^\]]*)\]\((https?:\/\/[^\s\)]+)\)|\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s]+\.(?:png|jpg|jpeg|gif|webp)(?:\?[^\s]*)?)/gi;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        container.appendChild(document.createTextNode(line.slice(lastIndex, match.index)));
+      }
+
+      if (match[1] !== undefined || match[2] !== undefined) {
+        // Markdown Image ![alt](url)
+        const alt = match[1] || "Image";
+        const src = match[2];
+        const img = document.createElement("img");
+        img.className = "a2img";
+        img.src = src;
+        img.alt = alt;
+        img.style.marginTop = "8px";
+        img.style.marginBottom = "8px";
+        container.appendChild(img);
+      } else if (match[3] !== undefined || match[4] !== undefined) {
+        // Markdown Link [label](url)
+        const label = match[3];
+        const href = match[4];
+        const a = document.createElement("a");
+        a.href = href;
+        a.textContent = label;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.style.color = "var(--accent)";
+        container.appendChild(a);
+      } else if (match[5] !== undefined) {
+        // Bare Image URL
+        const src = match[5];
+        const img = document.createElement("img");
+        img.className = "a2img";
+        img.src = src;
+        img.style.marginTop = "8px";
+        img.style.marginBottom = "8px";
+        container.appendChild(img);
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      container.appendChild(document.createTextNode(line.slice(lastIndex)));
+    }
+  });
+}
+
 function renderReply(b, parts) {
   b.textContent = "";   // clear the "…" placeholder
   const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
   const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
 
   const textStr = texts.join("\n").trim();
-  if (textStr) b.appendChild(el("div", null, textStr));
+  if (textStr) {
+    const textDiv = el("div");
+    renderFormattedText(textDiv, textStr);
+    b.appendChild(textDiv);
+  }
 
   if (a2ui.length) {
     b.classList.add("rich");
